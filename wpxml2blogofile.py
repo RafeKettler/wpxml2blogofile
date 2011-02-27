@@ -1,16 +1,18 @@
+import sys
+import re
+
 from lxml import etree
-from sys import argv
 from os import mkdir
 from os.path import join
-import re
 from datetime import datetime
 
-tree = etree.parse(open(argv[1], 'r'))
-
 def setup():
+    '''Set up for parsing and conversion.'''
     mkdir("_posts")
     
 def parse():
+    '''Parse the XML file in argv[1] and for each post call write_post.'''
+    tree = etree.parse(open(sys.argv[1], 'r'))
     post_id = 1
     for item in tree.findall("channel/item"):
         if item.find("{http://wordpress.org/export/1.0/}post_type").text != "post":
@@ -21,10 +23,8 @@ def parse():
         post_id += 1
 
 def write_post(item, post_id):
-    ##########################################
+    '''Write a post using data from the XML node item with id post_id.'''
     # Set up all the data to write to the file
-    ##########################################
-    
     # Join all unique categories with commas
     categories = ', '.join(set([category.text for category in item.findall("category")]))
     # Make a datetime object from the <pubDate>
@@ -33,10 +33,7 @@ def write_post(item, post_id):
     guid = item.find("guid").text
     title = item.find("title").text
     permalink = item.find("link").text
-    #########################################
     # Write the post
-    #########################################
-
     # Make the post name and file handle
     post = open(join("_posts", "%04d. %s.html" % (post_id, 
                                                   path_title(title))), 'w')
