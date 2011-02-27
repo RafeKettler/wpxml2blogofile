@@ -38,8 +38,20 @@ def parse():
 def write_post(item, post_id):
     '''Write a post using data from the XML node item with id post_id.'''
     # Set up all the data to write to the file
-    # Join all unique categories with commas
-    categories = ', '.join(set([category.text for category in item.findall("category")]))
+    # Build categories and tags. Use sets to ensure no dupes
+    categories = set()
+    tags = set()
+    for category in item.findall("category"):
+        try:
+            if category.attrib['domain'] == 'tag':
+                tags.add(category.text)
+            elif category.attrib['domain'] == 'category':
+                categories.add(category.text)
+        except KeyError:
+            # Plain category tag with no domain attribute. Ignore it
+            pass
+    categories_str = ', '.join(categories)
+    tags_str = ', '.join(tags)
     # Make a datetime object from the <pubDate>
     date = datetime.strptime(item.find("{http://wordpress.org/export/1.0/}post_date").text, 
                              "%Y-%m-%d %H:%M:%S")
@@ -52,11 +64,12 @@ def write_post(item, post_id):
                                                   path_title(title))), 'w')
     # Write the yaml
     post.write("---\n")
-    post.write("categories: %s\n" % categories)
+    post.write("categories: %s\n" % categories_str)
     post.write("date: %s\n" % date.strftime("%Y/%m/%d %H:%M:%S"))
     post.write("guid: %s\n" % guid)
-    post.write("title: %s\n" % title)
     post.write("permalink: %s\n" % permalink)
+    post.write("title: %s\n" % title)
+    post.write("tags: %s\n" % tags_str)
     post.write("---\n")
     # Write the content
     post.write(item.find("{http://purl.org/rss/1.0/modules/content/}encoded").text)
