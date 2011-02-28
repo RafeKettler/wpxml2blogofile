@@ -4,7 +4,7 @@
 Conversion script for changing Wordpress XML dumps to blogofile posts.
 Copyright (c) 2011 Rafe Kettler.
 
-MIT licensed, see http://www.github.com/RafeKettler/wpxml2blogofile/LICENSE for 
+MIT licensed, see http://www.github.com/RafeKettler/wpxml2blogofile/LICENSE for
 the full license.
 
 Usage: $ python wpxml2blogofile.py [your_wp_xml_dump.xml]
@@ -14,15 +14,28 @@ No output means success.
 import sys
 import re
 
-from lxml import etree
 from os import mkdir
 from os.path import join
 from datetime import datetime
 
+try:
+    from lxml import etree
+except ImportError:
+    print('''lxml is required for this script. Try installing using
+easy_install or your OS's package management system.''')
+    exit()
+
+
 def setup():
     '''Set up for parsing and conversion.'''
-    mkdir("_posts")
-    
+    try:
+        mkdir("_posts")
+    except OSError:
+        # Directory already exists
+        resp = raw_input("Warning: directory _posts already exists. Write anyway? (y/n)")
+        if resp.startswith('n'):
+            exit()
+
 def parse():
     '''Parse the XML file in argv[1] and for each post call write_post.'''
     tree = etree.parse(open(sys.argv[1], 'r'))
@@ -53,14 +66,14 @@ def write_post(item, post_id):
     categories_str = ', '.join(categories)
     tags_str = ', '.join(tags)
     # Make a datetime object from the <pubDate>
-    date = datetime.strptime(item.find("{http://wordpress.org/export/1.0/}post_date").text, 
-                             "%Y-%m-%d %H:%M:%S")
+    raw_date = item.find("{http://wordpress.org/export/1.0/}post_date").text
+    date = datetime.strptime(raw_date, "%Y-%m-%d %H:%M:%S")
     guid = item.find("guid").text
     title = item.find("title").text
     permalink = item.find("link").text
     # Write the post
     # Make the post name and file handle
-    post = open(join("_posts", "%04d. %s.html" % (post_id, 
+    post = open(join("_posts", "%04d. %s.html" % (post_id,
                                                   path_title(title))), 'w')
     # Write the yaml
     post.write("---\n")
@@ -77,11 +90,12 @@ def write_post(item, post_id):
 
 def path_title(title):
     '''Make a title suitable for paths.'''
-    t = re.sub(r'[/!:?\-,\']', '', title.strip().lower().replace(' ', '_'))
-    return t
+    title = re.sub(r'[/!:?\-,\']', '', title.strip().lower().replace(' ', '_'))
+    return title
 
 if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        print "Usage: $ python wpxml2blogofile.py [your_wp_xml_dump.xml]"
+        exit()
     setup()
     parse()
-
-    
