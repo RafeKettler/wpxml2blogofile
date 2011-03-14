@@ -8,7 +8,6 @@ MIT licensed, see http://www.github.com/RafeKettler/wpxml2blogofile/LICENSE for
 the full license.
 
 Usage: $ python wpxml2blogofile.py [your_wp_xml_dump.xml]
-No output means success.
 """
 
 import sys
@@ -102,4 +101,5 @@ if __name__ == "__main__":
         exit(2)
     setup()
     parse()
+    print "Successfully wrote posts."
     exit(0)
