@@ -23,7 +23,7 @@ try:
 except ImportError:
     print("""lxml is required for this script. Try installing using
 easy_install or your OS's package management system.""")
-    exit()
+    exit(1)
 
 
 def setup():
@@ -95,7 +95,11 @@ def path_title(title):
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        print "Usage: $ python wpxml2blogofile.py [your_wp_xml_dump.xml]"
-        exit()
+        print "Usage: python wpxml2blogofile.py [your_wp_xml_dump.xml]"
+        exit(1)
+    elif len(sys.argv) > 2:
+        print >> sys.stderr, "Error: too many files. Usage: python wpxml2blogofile.py [your_wp_xml_dump.xml]"
+        exit(2)
     setup()
     parse()
+    exit(0)
