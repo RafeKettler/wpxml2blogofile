@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""wpxml2blogofile.py
+"""
+wpxml2blogofile.py
 Conversion script for changing Wordpress XML dumps to blogofile posts.
 Copyright (c) 2011 Rafe Kettler.
 
