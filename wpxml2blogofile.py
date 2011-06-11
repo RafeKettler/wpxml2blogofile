@@ -13,6 +13,7 @@ Usage: $ python wpxml2blogofile.py [your_wp_xml_dump.xml]
 
 import sys
 import re
+import codecs
 
 from os import mkdir
 from os.path import join
@@ -41,9 +42,9 @@ def parse():
     tree = etree.parse(open(sys.argv[1], "r"))
     post_id = 1
     for item in tree.findall("channel/item"):
-        if item.find("{http://wordpress.org/export/1.0/}post_type").text != "post":
+        if item.find("{http://wordpress.org/export/1.1/}post_type").text != "post":
             continue
-        if item.find("{http://wordpress.org/export/1.0/}status").text != "publish":
+        if item.find("{http://wordpress.org/export/1.1/}status").text != "publish":
             continue
         write_post(item, post_id)
         post_id += 1
@@ -63,29 +64,30 @@ def write_post(item, post_id):
         except KeyError:
             # Plain category tag with no domain attribute. Ignore it
             pass
-    categories_str = ", ".join(categories)
-    tags_str = ", ".join(tags)
+    categories_str = u", ".join(categories)
+    tags_str = u", ".join(tags)
     # Make a datetime object from the <pubDate>
-    raw_date = item.find("{http://wordpress.org/export/1.0/}post_date").text
+    raw_date = item.find("{http://wordpress.org/export/1.1/}post_date").text
     date = datetime.strptime(raw_date, "%Y-%m-%d %H:%M:%S")
     guid = item.find("guid").text
     title = item.find("title").text
     permalink = item.find("link").text
     # Write the post
     # Make the post name and file handle
-    post = open(join("_posts", "%04d. %s.html" % (post_id,
-                                                  path_title(title))), "w")
+    post = codecs.open(join("_posts", "%04d. %s.html" % (post_id, path_title(title))),
+                        encoding="utf-8", mode="w")
     # Write the yaml
     post.write("---\n")
-    post.write("categories: %s\n" % categories_str)
-    post.write("date: %s\n" % date.strftime("%Y/%m/%d %H:%M:%S"))
-    post.write("guid: %s\n" % guid)
-    post.write("permalink: %s\n" % permalink)
-    post.write("title: %s\n" % title)
-    post.write("tags: %s\n" % tags_str)
-    post.write("---\n")
+    #post.write("categories: %s\n" % categories_str)
+    post.write(unicode("categories: %s\n" % categories_str))
+    post.write(unicode("date: %s\n" % date.strftime("%Y/%m/%d %H:%M:%S")))
+    post.write(unicode("guid: %s\n" % guid))
+    post.write(unicode("permalink: %s\n" % permalink))
+    post.write(unicode(u"title: %s\n" % title))
+    post.write(unicode("tags: %s\n" % tags_str))
+    post.write(unicode("---\n"))
     # Write the content
-    post.write(item.find("{http://purl.org/rss/1.0/modules/content/}encoded").text)
+    post.write(unicode(item.find("{http://purl.org/rss/1.0/modules/content/}encoded").text))
     post.close()
 
 def path_title(title):
