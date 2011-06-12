@@ -40,11 +40,15 @@ def setup():
 def parse():
     """Parse the XML file in argv[1] and for each post call write_post."""
     tree = etree.parse(open(sys.argv[1], "r"))
+    # Grab the proper XML namespaces from the file
+    global WP_NS, CONTENT_NS
+    WP_NS = tree.getroot().nsmap['wp']
+    CONTENT_NS = tree.getroot().nsmap['content']
     post_id = 1
     for item in tree.findall("channel/item"):
-        if item.find("{http://wordpress.org/export/1.1/}post_type").text != "post":
+        if item.find("{%s}post_type" % WP_NS).text != "post":
             continue
-        if item.find("{http://wordpress.org/export/1.1/}status").text != "publish":
+        if item.find("{%s}status" % WP_NS).text != "publish":
             continue
         write_post(item, post_id)
         post_id += 1
@@ -67,7 +71,7 @@ def write_post(item, post_id):
     categories_str = u", ".join(categories)
     tags_str = u", ".join(tags)
     # Make a datetime object from the <pubDate>
-    raw_date = item.find("{http://wordpress.org/export/1.1/}post_date").text
+    raw_date = item.find("{%s}post_date" % WP_NS).text
     date = datetime.strptime(raw_date, "%Y-%m-%d %H:%M:%S")
     guid = item.find("guid").text
     title = item.find("title").text
@@ -87,7 +91,7 @@ def write_post(item, post_id):
     post.write(unicode("tags: %s\n" % tags_str))
     post.write(unicode("---\n"))
     # Write the content
-    post.write(unicode(item.find("{http://purl.org/rss/1.0/modules/content/}encoded").text))
+    post.write(unicode(item.find("{%s}encoded" % CONTENT_NS).text))
     post.close()
 
 def path_title(title):
